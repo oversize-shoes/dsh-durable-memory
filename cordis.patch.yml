@@ -1,0 +1,9 @@
+- insert:
+    - id: durable-memory
+      name: dsh-durable-memory
+      config:
+        enabled: true
+        maxEntries: 2000
+        maxContentChars: 2000
+        recallChars: 6000
+        recallLimit: 8

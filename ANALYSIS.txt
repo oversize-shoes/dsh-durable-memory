@@ -1,0 +1,40 @@
+DSH 长期记忆机制分析与实现依据
+分析日期：2026-11-20
+官方代码：https://github.com/deepseek-ai/deepseek-harness
+固定提交：2e39e70496aa02986ca6a820c5d497e816b69d7e
+该提交 apps/cli/package.json 版本：0.2.2-rc.5
+
+一、为什么不能只靠历史对话
+DSH 的 Session 是带类型事件的持久化日志；模型请求由日志投影、系统提示、动态上下文和工具配置构建。保存过对话不意味着每个新会话自动获取其中的重要事实。长期记忆需要独立持久化、范围选择与检索，再通过正式接口回到模型请求。
+依据：packages/core/session/src/index.ts；packages/core/agent-loop/src/agent.ts。
+
+二、上下文接口与日志
+systemPrompt.section 注册提示词规则；systemPrompt.context 注册动态上下文，回调同步返回字符串。回调支持 interpolate:false，避免用户记忆中的 {{...}} 被解释为模板变量。
+agent-loop 在 preStep 前 assemble，随后在准备实际请求时 refreshContext。RuntimeContextProjection 检测当前快照，agent.ts 将它作为 user/message 写入 Session，source 为 runtime-context，之后再 buildRequest。插件无需直接篡改模型请求，也不应写自定义 Session 事件。
+因此本插件使用动态上下文承载召回，静态 section 仅说明记忆工具的用途。注册在 agent.ctx 下保证代理隔离。通过 pre-step 维护当前查询；使用 payload.agent 身份检查，避免父 scope 收到子代理事件后错误更新查询。
+依据：packages/core/system-prompt/src/index.ts（PromptContext、context、refreshContext）；packages/core/agent-loop/src/agent.ts 的 preStep 和 step；packages/core/agent-loop/src/runtime-context.ts。
+
+三、存储接口
+DSH 已有 storage hub、JSON/SQLite 后端及 storageDomain。DomainFacility.open 负责版本和数据 schema 校验；KvTable.put/update/delete 提供持久化写队列。写入先完成后端持久化，再更新内存。JSON 后端提供原子文档重写。损坏数据默认拒绝打开，不应把它当作空记忆覆盖。
+默认 base bundle 将 storageDomain.backend 配置为 json，root 为 dshHomePath('storages')。本插件使用独立 durable_memory domain，格式版本 1，memories 表。无需另外创建自有文件存储协议或改动 Session 格式。
+插件自身另有操作队列，串行包住读取、去重、容量检查及写入，避免只有底层 put 串行但上层判断仍并发失效。revision 检查防止旧读取结果覆盖新修改。
+依据：packages/storage/storage-domain/src/{index,domain,spec}.ts；packages/storage/storage-json/src/index.ts；packages/bundle/base/cordis.patch.yml。
+
+四、生命周期
+Cordis 管理插件 fiber；注册返回 disposer。agent/created 在新代理开始工作前触发。插件启用时也要遍历已存在的代理，否则热加载只对之后创建的会话生效。
+本插件使用双向 effect 所有权，将 agent 上的上下文/事件注册同时绑定到 agent 和插件生命周期；停用插件时清除注入、规则、工具，最后关闭 domain。重新启用重新读持久化数据。测试覆盖这一过程。
+依据：packages/core/agent/src/{index,runtime-types}.ts；vendor/cordis；packages/core/system-prompt/src/index.ts。
+
+五、工具与发布
+defineTool 定义参数、规范返回值和渲染。工具通过 DSH 正常调度流程执行，NativeToolExecutor 可直接消费；没有另起 HTTP 服务或旁路执行。当前返回规范 JSON 字符串，供模型查看；未来版本可升级为判别式结构化对象输出。
+可安装插件是带 dsh.bundle.patch 的 npm 包；cordis.patch.yml 引用包名插入 loader 行。与宿主共享的 DSH 包声明 peerDependencies，测试用 devDependencies。兼容性只声明实际核对的 0.2.2-rc.5。
+依据：docs/cookbook/adding-a-tool.md；docs/user/develop/basic/publish.md。
+
+六、首版取舍
+本版本实现可用的本地持久化基础：全局/工作目录范围、来源操作位置、中文关键词召回、预算、过期、更新与删除。选择精确工作目录隔离，是为了避免隐式把两个 worktree 的决定混用；不是完整的项目身份服务。
+未包含后台 LLM 提炼、向量数据库、GUI、人工候选审批、来源文件失效检测、完整修订日志和多进程写协调。保存依赖当前模型调用工具，不能宣传为无人干预的自动记忆系统。没有额外 LLM 调用不等于零 Token 成本：注入文本与工具描述会占用上下文。
+已有社区记忆项目提供更广功能，本实现的目的不是声称首次发明，而是基于固定官方接口建立可审查、可测试的独立起点。
+
+七、验证范围
+真实发布的 DSH 基础包测试，不是只用 Map 模拟存储。代理使用精简替身，尚未做完整 profile 和真实模型端到端验证。功能测试、语法检查和 npm 打包结果见交付说明。此报告引用的源码可将上述路径接到以下固定前缀查看：
+https://github.com/deepseek-ai/deepseek-harness/blob/2e39e70496aa02986ca6a820c5d497e816b69d7e/

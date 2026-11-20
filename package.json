@@ -1,0 +1,49 @@
+{
+  "name": "dsh-durable-memory",
+  "version": "0.1.0",
+  "description": "Scoped local long-term memory for DeepSeek Harness",
+  "type": "module",
+  "main": "index.js",
+  "files": [
+    "index.js",
+    "memory.js",
+    "cordis.patch.yml",
+    "README.md",
+    "ANALYSIS.txt",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=24.9.0",
+    "dsh": "0.2.2-rc.5"
+  },
+  "dsh": {
+    "bundle": {
+      "patch": "./cordis.patch.yml"
+    }
+  },
+  "scripts": {
+    "test": "node --test",
+    "check": "node --check index.js && node --check memory.js"
+  },
+  "dependencies": {
+    "zod": "^4.1.0"
+  },
+  "peerDependencies": {
+    "@deepseek-ai/cordis": "^4.1.0",
+    "@deepseek-ai/dsh-storage-domain": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-system-prompt": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-tools": "0.2.2-rc.5",
+    "@deepseek-ai/schemastery": "^3.18.0"
+  },
+  "devDependencies": {
+    "@deepseek-ai/cordis": "^4.1.0",
+    "@deepseek-ai/dsh-storage": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-storage-domain": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-storage-json": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-system-prompt": "0.2.2-rc.5",
+    "@deepseek-ai/dsh-tool-executor-native": "^0.2.2-rc.5",
+    "@deepseek-ai/dsh-tools": "0.2.2-rc.5",
+    "@deepseek-ai/schemastery": "^3.18.0"
+  },
+  "license": "MIT"
+}

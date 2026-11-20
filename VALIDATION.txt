@@ -1,0 +1,19 @@
+验证记录（2026-11-20）
+
+环境：Windows、Node.js v24.22.0、npm 11.19.1。
+官方源码：2e39e70496aa02986ca6a820c5d497e816b69d7e。
+使用 npm 发布的 DSH 0.2.2-rc.5 基础包。
+
+npm install --ignore-scripts --no-audit --no-fund：通过。
+npm test：6 项全部通过。
+  1. JSON 持久化重开保留记忆、来源和版本。
+  2. 范围隔离、全局召回、过期过滤、并发重复保存去重。
+  3. 并发更新拒绝旧版本覆盖、跨项目删除拒绝、删除后不再召回。
+  4. 中文检索、注入预算、敏感模式检测和容量校验。
+  5. 损坏存储拒绝加载，文件保持原状。
+  6. 真实 Cordis、存储、上下文、工具及 NativeToolExecutor 集成；工具调用、范围隔离、停用清理和重新加载。
+npm run check：两个源文件的 Node 语法检查通过。
+npm pack --pack-destination ..：生成可分发 tgz。
+
+未验证：完整 CLI profile 加载、Desktop/Web UI 安装启动、真实 LLM 交互、压缩长对话后端到端召回、其他 DSH 版本、macOS/Linux 和多进程共享写入。
+测试中的 agent 为精简对象替身，不是完整 agent-loop。上下文持久化机制由固定官方源码核对，未将本插件放入完整模型请求链端到端测试。
