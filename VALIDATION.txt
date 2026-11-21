@@ -1,4 +1,4 @@
-验证记录（2026-11-20）
+验证记录（初版 2026-11-20；0.1.1 更新于 2026-11-21）
 
 环境：Windows、Node.js v24.22.0、npm 11.19.1。
 官方源码：2e39e70496aa02986ca6a820c5d497e816b69d7e。
@@ -17,3 +17,10 @@ npm pack --pack-destination ..：生成可分发 tgz。
 
 未验证：完整 CLI profile 加载、Desktop/Web UI 安装启动、真实 LLM 交互、压缩长对话后端到端召回、其他 DSH 版本、macOS/Linux 和多进程共享写入。
 测试中的 agent 为精简对象替身，不是完整 agent-loop。上下文持久化机制由固定官方源码核对，未将本插件放入完整模型请求链端到端测试。
+
+0.1.1 补充验证：
+- DSH 0.2.1-rc.2：6 项服务集成测试通过，使用该版原生 tools.execute API。
+- DSH 0.2.2-rc.5：6 项服务集成测试通过，使用 NativeToolExecutor。
+- Windows、Node 24.22.0、DSH 0.2.1-rc.2：在独立 DSH_HOME 内通过官方 CLI 安装 tgz，并启动完整 Web profile（临时端口、无模型配置）。探针确认 durable_memory 工具与存储 domain 已加载，输出 DURABLE_MEMORY_STARTUP_OK；stderr 为空。随后关闭该测试进程。
+- 本机当前 web profile 安装成功，未重启用户原有进程；当前已登录页面中的实时加载状态尚未确认。
+- 没有执行真实模型对话或完整 Desktop UI 测试。GitHub Actions 结果单独记录，不把本地 Windows 通过当作 Linux 已通过。

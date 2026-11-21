@@ -1,6 +1,6 @@
 {
   "name": "dsh-durable-memory",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Scoped local long-term memory for DeepSeek Harness",
   "type": "module",
   "main": "index.js",
@@ -10,11 +10,16 @@
     "cordis.patch.yml",
     "README.md",
     "ANALYSIS.txt",
-    "LICENSE"
+    "LICENSE",
+    "CHANGELOG.md",
+    "README.zh-CN.md",
+    "CONTRIBUTING.md",
+    "docs/architecture-analysis.txt",
+    "VALIDATION.txt"
   ],
   "engines": {
     "node": ">=24.9.0",
-    "dsh": "0.2.2-rc.5"
+    "dsh": "0.2.1-rc.2 || 0.2.2-rc.5"
   },
   "dsh": {
     "bundle": {
@@ -23,16 +28,17 @@
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check index.js && node --check memory.js"
+    "check": "node --check index.js && node --check memory.js",
+    "test:compat": "node scripts/test-compat.mjs"
   },
   "dependencies": {
     "zod": "^4.1.0"
   },
   "peerDependencies": {
-    "@deepseek-ai/cordis": "^4.1.0",
-    "@deepseek-ai/dsh-storage-domain": "0.2.2-rc.5",
-    "@deepseek-ai/dsh-system-prompt": "0.2.2-rc.5",
-    "@deepseek-ai/dsh-tools": "0.2.2-rc.5",
+    "@deepseek-ai/cordis": "~4.0.5 || ^4.1.0",
+    "@deepseek-ai/dsh-storage-domain": "0.2.1-rc.2 || 0.2.2-rc.5",
+    "@deepseek-ai/dsh-system-prompt": "0.2.1-rc.2 || 0.2.2-rc.5",
+    "@deepseek-ai/dsh-tools": "0.2.1-rc.2 || 0.2.2-rc.5",
     "@deepseek-ai/schemastery": "^3.18.0"
   },
   "devDependencies": {
@@ -43,7 +49,22 @@
     "@deepseek-ai/dsh-system-prompt": "0.2.2-rc.5",
     "@deepseek-ai/dsh-tool-executor-native": "^0.2.2-rc.5",
     "@deepseek-ai/dsh-tools": "0.2.2-rc.5",
-    "@deepseek-ai/schemastery": "^3.18.0"
+    "@deepseek-ai/schemastery": "^3.18.0",
+    "@deepseek-ai/dsh-scope": "0.2.2-rc.5"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/oversize-shoes/dsh-durable-memory.git"
+  },
+  "homepage": "https://github.com/oversize-shoes/dsh-durable-memory#readme",
+  "bugs": {
+    "url": "https://github.com/oversize-shoes/dsh-durable-memory/issues"
+  },
+  "keywords": [
+    "dsh-plugin",
+    "deepseek-harness",
+    "memory",
+    "long-term-memory"
+  ]
 }

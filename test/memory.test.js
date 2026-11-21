@@ -9,7 +9,6 @@ import { JsonStorageBackend } from '@deepseek-ai/dsh-storage-json'
 import { DomainFacility } from '@deepseek-ai/dsh-storage-domain'
 import SystemPrompt from '@deepseek-ai/dsh-system-prompt'
 import Tools from '@deepseek-ai/dsh-tools'
-import { NativeToolExecutor } from '@deepseek-ai/dsh-tool-executor-native'
 import { createScope, scopeTarget } from '@deepseek-ai/dsh-scope'
 import { Memory, spec, scopeOf } from '../memory.js'
 import { apply } from '../index.js'
@@ -93,7 +92,10 @@ test('真实 Cordis、工具与上下文服务挂载、跨范围召回和停用�
   const { ctx, root, facility } = await setup(t)
   new SystemPrompt(ctx, {})
   new Tools(ctx)
-  ctx.tools.setExecutor(new NativeToolExecutor(ctx))
+  if (typeof ctx.tools.setExecutor === 'function') {
+    const { NativeToolExecutor } = await import('@deepseek-ai/dsh-tool-executor-native')
+    ctx.tools.setExecutor(new NativeToolExecutor(ctx))
+  }
   ctx.provide('storageDomain', facility)
   const aKey = {}, bKey = {}
   const aScope = createScope(ctx, aKey), bScope = createScope(ctx, bKey)
@@ -110,15 +112,20 @@ test('真实 Cordis、工具与上下文服务挂载、跨范围召回和停用�
   assert.ok(a.contexts.some(c => c.text.includes('部署使用容器')))
   assert.equal(b.contexts.some(c => c.text.includes('部署使用容器')), false)
   assert.ok(ctx.tools.schemas().some(tool => tool.name === 'durable_memory'))
-  const tool = ctx.tools.definitions().find(tool => tool.name === 'durable_memory')
-  const result = await tool.execute({ action: 'save', content: '持续集成使用 GitHub Actions' }, { agent, signal: new AbortController().signal })
-  assert.equal(JSON.parse(result).memory.scope, scopeOf(root))
-  const batch = await ctx.tools.execute({
+  const execution = {
     agent, signal: new AbortController().signal,
-    calls: [{ type: 'tool_call', id: 'search-1', name: 'durable_memory', arguments: JSON.stringify({ action: 'search', query: '持续集成' }) }],
-  })
-  assert.equal(batch.results[0].result.isError, false)
-  assert.ok(JSON.stringify(batch.results[0].result).includes('GitHub Actions'))
+  }
+  async function execute(args, id) {
+    return typeof ctx.tools.setExecutor === 'function'
+      ? (await ctx.tools.execute({ ...execution, calls: [{ type: 'tool_call', id, name: 'durable_memory', arguments: JSON.stringify(args) }] })).results[0].result
+      : await ctx.tools.execute({ ...execution, callId: id, name: 'durable_memory', arguments: args })
+  }
+  const saved = await execute({ action: 'save', content: '持续集成使用 GitHub Actions' }, 'save-1')
+  assert.equal(saved.isError, false)
+  assert.ok(JSON.stringify(saved).includes(scopeOf(root)))
+  const outcome = await execute({ action: 'search', query: '持续集成' }, 'search-1')
+  assert.equal(outcome.isError, false)
+  assert.ok(JSON.stringify(outcome).includes('GitHub Actions'))
   await ctx.serial(scopeTarget(agent, aKey), 'agent/pre-step', {
     agent, messages: [{ content: [{ type: 'text', text: '持续集成' }] }],
   }, async () => ({ kind: 'continue' }))

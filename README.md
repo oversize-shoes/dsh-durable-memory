@@ -1,59 +1,107 @@
 # DSH Durable Memory
 
-DSH 本地长期记忆插件原型，适配并锁定 `0.2.2-rc.5`。独立社区项目。
+[简体中文](README.zh-CN.md) · [Releases](https://github.com/oversize-shoes/dsh-durable-memory/releases) · [Issues](https://github.com/oversize-shoes/dsh-durable-memory/issues)
 
-支持全局和工作目录记忆、中文与英文关键词检索、相关记忆自动注入、模型工具增删改查、过期时间、重复保存去重、版本冲突保护和来源会话记录。
+Local, cross-session memory for DeepSeek Harness. Remember project conventions, stable preferences and lessons, and recall them in new conversations. Independent community plugin, MIT licensed. **0.1.1 is a preview release.**
 
-## 安装
+## Features
 
-在 DSH `0.2.2-rc.5` 中，将同目录上一级提供的 `dsh-durable-memory-0.1.0.tgz` 完整路径粘贴到「插件 → 添加插件」。也可以使用命令行：
+- Persistent memory through DSH's native storage domain.
+- Separate working-directory and global scopes.
+- Automatic retrieval within a character budget.
+- Chinese bigram and English keyword search; no embedding service or extra API key.
+- Save, search, list, update and delete; expiry, pinning, deduplication and revision checks.
 
-```powershell
-dsh plugin --profile desktop add "C:/完整路径/dsh-durable-memory-0.1.0.tgz"
+Saving is model-driven through the `durable_memory` tool. There is no background LLM extraction. Recalled content is sent to your configured model provider and uses context tokens.
+
+## Requirements
+
+| Component | Requirement |
+|---|---|
+| DSH | **0.2.1-rc.2 or 0.2.2-rc.5**; only these releases are declared compatible |
+| Node.js | **24.9.0+** |
+| Package manager | pnpm available to the DSH installer |
+| Profile | Web or a custom profile providing agents, tools, systemPrompt and storageDomain |
+
+Check `node --version`, `dsh --version`, and `pnpm --version`. Full Desktop validation remains pending. Do not bypass compatibility checks for other releases.
+
+## Install
+
+Download **dsh-durable-memory-0.1.1.tgz** from the [release page](https://github.com/oversize-shoes/dsh-durable-memory/releases/tag/v0.1.1). Use **Plugins → Add plugin** in DSH to select the file or enter its full local path. Do not select GitHub's automatically generated Source code archives.
+
+For the Web profile, install directly:
+
+```sh
+dsh plugin --profile web add "https://github.com/oversize-shoes/dsh-durable-memory/releases/download/v0.1.1/dsh-durable-memory-0.1.1.tgz"
 ```
 
-Web 版将 `desktop` 换成 `web`。按 DSH 提示重启，然后在新会话中输入：
+If download fails, download manually and install the local file:
 
-> 记住：这个项目统一使用 pnpm，保存为项目记忆。
+```powershell
+dsh plugin --profile web add "C:/Downloads/dsh-durable-memory-0.1.1.tgz"
+```
 
-在同一工作目录的新会话中输入：
+Replace `web` with the profile you actually run. Desktop wrappers may use a different name. Follow the host's enable/restart instructions. Restart the DSH backend if necessary; refreshing the browser alone may not load plugins. Open a new conversation and confirm the **durable_memory** tool is available.
 
-> 查找我们关于包管理器的记忆。
+The tarball contains runnable JS and has no install scripts or build step. **The package has not been published to npm by name.** Use the release URL or tarball.
 
-用户可以要求“列出当前项目记忆”“把这条记忆改成……”“删除这条记忆”。模型调用 `durable_memory` 工具；它必须使用查询返回的 `id` 与 `revision` 进行修改或删除。全局记忆需明确指定 `scope: global`。
+## Three-minute verification
 
-## 行为
+In conversation A with a working directory:
 
-- 项目范围是经过 realpath 规范化的**确切会话工作目录**，不是 Git 仓库根。子目录和 worktree 默认拥有不同记忆；Windows 路径忽略大小写。没有 cwd 的会话只自动召回全局记忆，项目操作会报错。
-- 全局记忆跨此 DSH 存储配置中的工作目录共享。项目搜索同时检索全局；项目模式修改或删除全局条目会拒绝，必须明确全局范围。
-- 持久化使用 DSH `storageDomain`。默认 base profile 的 JSON 后端将本插件数据保存为 `$DSH_HOME/storages/durable_memory.json`；自定义存储路由可能改变位置。升级插件不覆盖此数据。卸载保留记忆；停用移除工具和注入。
-- 中文使用连续汉字二元词切分，英文使用词项交集评分。这是词面检索，不是语义向量检索。同义词可能无法命中。
-- 第一步尚无查询时，会在预算内提供最近记忆和固定条目；随后以 pre-step 接收到的新消息作为查询，空消息保持前次查询。固定条目优先，但仍受预算限制。
-- 自动召回通过 DSH 的动态上下文接口；DSH 将该内容记录为 runtime-context 会话快照，不修改旧会话或完整系统提示词。
-- 保存由模型工具执行，插件提示模型沉淀稳定事实；没有后台模型自动提炼、逐条人工审批或额外模型调用。模型未调用保存工具就不会新增记忆。
-- 来源记录是保存/修改工具执行时的会话 ID 和序列位置，便于定位操作；不是自动核实的事实证据。更新覆盖原记录，当前版本不提供修订历史。
-- 删除或过期阻止后续召回，不会抹去已有对话快照中的副本。需要彻底清除敏感内容时，还须处理相关会话与备份。
+> Call durable_memory and save a project memory: this project's test phrase is "blue-whale-731". Report the saved ID.
 
-## 配置
+Create conversation B with the **same working directory**:
 
-通过本插件的 loader 行配置设置以下字段，重载/重启后生效：
+> Search durable_memory for this project's test phrase.
 
-| 字段 | 默认 | 含义 |
+Expected: `blue-whale-731`. Then ask to update it to `blue-whale-732`, list memories and delete the test entry. Updates and deletes require the ID and current revision. To verify isolation, use a different actual working directory; changing the conversation title is not sufficient.
+
+For shared preferences, explicitly request **global** scope. Project searches include global entries, but changing a global entry requires `scope=global`.
+
+## Storage and privacy
+
+Default: `$DSH_HOME/storages/durable_memory.json`, normally `%USERPROFILE%/.dsh/storages/durable_memory.json` on Windows. Custom backend routing may change the location. Uninstalling preserves data.
+
+Project scope is the exact canonical session working directory. Git subdirectories and worktrees have different scopes; moving a folder changes its scope. Global scope is shared within this DSH storage, not cloud-synced. Conversations without a working directory automatically recall global entries only.
+
+The plugin adds no telemetry, cloud sync or independent model calls, but recalled data reaches your model provider. Common credential detection is incomplete: do not save secrets. Deletion and expiry prevent future recall but cannot erase copies already in conversation logs or backups. Source fields locate the save operation, not independently verified evidence. Memory is historical reference and may be outdated.
+
+## Configuration
+
+Set these fields on the plugin's loader row, then reload/restart as instructed by DSH:
+
+| Field | Default | Purpose |
 |---|---:|---|
-| enabled | true | 是否启用 |
-| maxEntries | 2000 | 全部范围合计条目上限，包含过期条目 |
-| maxContentChars | 2000 | 单条内容的 JS 字符长度上限 |
-| recallChars | 6000 | 单次自动注入的 JS 字符长度预算，包含标题 |
-| recallLimit | 8 | 搜索和自动召回最多返回的条目数 |
+| enabled | true | Enable plugin |
+| maxEntries | 2000 | Total capacity, including expired entries |
+| maxContentChars | 2000 | Maximum JS characters per entry |
+| recallChars | 6000 | Automatic context budget, including heading |
+| recallLimit | 8 | Maximum search/recall results |
 
-`save` 支持 `ttlDays`，0 表示不自动过期。容量满时拒绝新保存；`list` 包含当前范围的过期条目，便于清理。内容不自动截断。配置使用正整数，`enabled` 除外。
+Save accepts `tags`, `pinned` and `ttlDays` (0 means no expiry). Full capacity rejects new saves. `list` includes expired entries for cleanup. Before receiving a query, recall offers recent/pinned memories; subsequent messages drive keyword retrieval. Pinning remains subject to the budget. Keyword search may miss synonyms.
 
-## 已验证与限制
+## Update and uninstall
 
-在 Node 24 上，使用 DSH 0.2.2-rc.5 真实 Cordis、JSON 存储、DomainFacility、SystemPrompt、ToolsService 和 NativeToolExecutor 运行集成测试；代理对象使用精简测试替身。覆盖持久化重开、目录隔离、全局召回、过期、去重、并发修改冲突、损坏文件、工具执行、上下文注入、卸载和重新加载。
+Install the new release URL in the same profile, then restart as instructed. Back up the memory file with DSH stopped before upgrades.
 
-未进行完整 DSH Desktop/Web profile 安装启动、真实模型对话和跨操作系统测试。当前应作为可试用原型；版本兼容范围没有扩展到其他 rc。
+```sh
+dsh plugin --profile web remove dsh-durable-memory
+```
 
-凭据检测仅为常见模式检查，不能保证识别全部敏感信息。记忆写入本地，但被召回的内容会发送给当前 DSH 配置的模型供应商。记忆数据可能包含旧指令；上下文会将其标记为历史参考，仍需模型遵守当前用户请求。多个 DSH 进程共用同一个 JSON 存储文件不属于本版本支持范围。
+Disabling/uninstalling removes future context injection and tool registration, retaining data.
 
-开发验证：`npm ci --ignore-scripts`、`npm test`、`npm run check`。源代码无需编译。
+## Troubleshooting
+
+- **No tool:** verify installation and runtime profiles match, restart the backend and check plugin loading status.
+- **No recall:** verify the save tool ran, use the same working directory and explicitly request a search.
+- **Version rejected:** report your exact DSH version; do not force installation.
+- **dsh missing from PATH:** use your existing launcher or Node CLI path.
+
+## Validation and contribution
+
+Tests use real DSH Cordis, storage, prompt and tool services with minimal agent doubles. They cover persistence, isolation, expiry, deduplication, revision conflicts, corrupt storage, dispatch, unload and reload. A clean DSH 0.2.1-rc.2 Web profile also booted on Windows with the tarball installed; a probe confirmed the tool and storage domain were ready. Full real-model/Desktop end-to-end validation remains pending. A [Windows/Linux CI example](docs/ci-example.yml) is provided but is not enabled: publishing Actions workflows requires additional GitHub authorization. Local results do not imply Linux CI passed.
+
+No background extraction, semantic embeddings, management UI, revision history, cloud sync or concurrent multi-process writers are provided yet.
+
+See [contribution guidance](CONTRIBUTING.md), [changelog](CHANGELOG.md), [architecture analysis](docs/architecture-analysis.txt) and [MIT license](LICENSE). Remove secrets/private paths before sharing logs.
