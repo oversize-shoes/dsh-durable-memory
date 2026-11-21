@@ -2,7 +2,7 @@
 
 [简体中文](README.zh-CN.md) · [Releases](https://github.com/oversize-shoes/dsh-durable-memory/releases) · [Issues](https://github.com/oversize-shoes/dsh-durable-memory/issues)
 
-Local, cross-session memory for DeepSeek Harness. Remember project conventions, stable preferences and lessons, and recall them in new conversations. Independent community plugin, MIT licensed. **0.1.1 is a preview release.**
+Local, cross-session memory for DeepSeek Harness. Remember project conventions, stable preferences and lessons, and recall them in new conversations. Independent community plugin, MIT licensed. **0.2.0 is a preview release.**
 
 ## Features
 
@@ -25,25 +25,41 @@ Saving is model-driven through the `durable_memory` tool. There is no background
 
 Check `node --version`, `dsh --version`, and `pnpm --version`. Full Desktop validation remains pending. Do not bypass compatibility checks for other releases.
 
-## Install
+## Install from GitHub (no tarball required)
 
-Download **dsh-durable-memory-0.1.1.tgz** from the [release page](https://github.com/oversize-shoes/dsh-durable-memory/releases/tag/v0.1.1). Use **Plugins → Add plugin** in DSH to select the file or enter its full local path. Do not select GitHub's automatically generated Source code archives.
+```sh
+dsh plugin --profile web add "github:oversize-shoes/dsh-durable-memory#v0.2.0"
+```
+
+In the DSH Add plugin dialog, use the same `github:oversize-shoes/dsh-durable-memory#v0.2.0` source. Replace `web` with your actual profile. All runnable JS, including the browser panel, is committed; no build/install scripts are required. Pin a release tag for reproducibility.
+
+## Alternative: release tarball
+
+Download **dsh-durable-memory-0.2.0.tgz** from the [release page](https://github.com/oversize-shoes/dsh-durable-memory/releases/tag/v0.2.0). Use **Plugins → Add plugin** in DSH to select the file or enter its full local path. Do not select GitHub's automatically generated Source code archives.
 
 For the Web profile, install directly:
 
 ```sh
-dsh plugin --profile web add "https://github.com/oversize-shoes/dsh-durable-memory/releases/download/v0.1.1/dsh-durable-memory-0.1.1.tgz"
+dsh plugin --profile web add "https://github.com/oversize-shoes/dsh-durable-memory/releases/download/v0.2.0/dsh-durable-memory-0.2.0.tgz"
 ```
 
 If download fails, download manually and install the local file:
 
 ```powershell
-dsh plugin --profile web add "C:/Downloads/dsh-durable-memory-0.1.1.tgz"
+dsh plugin --profile web add "C:/Downloads/dsh-durable-memory-0.2.0.tgz"
 ```
 
 Replace `web` with the profile you actually run. Desktop wrappers may use a different name. Follow the host's enable/restart instructions. Restart the DSH backend if necessary; refreshing the browser alone may not load plugins. Open a new conversation and confirm the **durable_memory** tool is available.
 
-The tarball contains runnable JS and has no install scripts or build step. **The package has not been published to npm by name.** Use the release URL or tarball.
+The tarball contains runnable JS and has no install scripts or build step. **The package has not been published to npm by name.** Use the GitHub repository, release URL or tarball.
+
+## Memory panel and write triggers
+
+Open an existing conversation and select **Memory** beside **Chat / Trajectory**. The panel lists all stored entries, with current-project/global filters, keyword search, active/expired status, timestamps and source details. You can add, edit and delete entries directly. An empty new-conversation home screen may not show conversation tabs yet.
+
+Memory persists across conversations and DSH restarts. Project entries apply to the same canonical working directory; global entries apply across directories in the same storage.
+
+Writes occur only when you click Save in the panel, or the model calls a mutation tool. The model is prompted to save stable facts and may choose to call the tool even without an explicit "remember" request. There is no deterministic end-of-turn extraction. Opening a conversation and automatic recall do not create memories. Confirm actual saves in the panel rather than relying on conversational assurances.
 
 ## Three-minute verification
 
@@ -102,6 +118,6 @@ Disabling/uninstalling removes future context injection and tool registration, r
 
 Tests use real DSH Cordis, storage, prompt and tool services with minimal agent doubles. They cover persistence, isolation, expiry, deduplication, revision conflicts, corrupt storage, dispatch, unload and reload. A clean DSH 0.2.1-rc.2 Web profile also booted on Windows with the tarball installed; a probe confirmed the tool and storage domain were ready. Full real-model/Desktop end-to-end validation remains pending. A [Windows/Linux CI example](docs/ci-example.yml) is provided but is not enabled: publishing Actions workflows requires additional GitHub authorization. Local results do not imply Linux CI passed.
 
-No background extraction, semantic embeddings, management UI, revision history, cloud sync or concurrent multi-process writers are provided yet.
+No background extraction, semantic embeddings, revision history, cloud sync or concurrent multi-process writers are provided yet.
 
 See [contribution guidance](CONTRIBUTING.md), [changelog](CHANGELOG.md), [architecture analysis](docs/architecture-analysis.txt) and [MIT license](LICENSE). Remove secrets/private paths before sharing logs.

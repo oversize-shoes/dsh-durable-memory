@@ -24,3 +24,11 @@ npm pack --pack-destination ..：生成可分发 tgz。
 - Windows、Node 24.22.0、DSH 0.2.1-rc.2：在独立 DSH_HOME 内通过官方 CLI 安装 tgz，并启动完整 Web profile（临时端口、无模型配置）。探针确认 durable_memory 工具与存储 domain 已加载，输出 DURABLE_MEMORY_STARTUP_OK；stderr 为空。随后关闭该测试进程。
 - 本机当前 web profile 安装成功，未重启用户原有进程；当前已登录页面中的实时加载状态尚未确认。
 - 没有执行真实模型对话或完整 Desktop UI 测试。GitHub Actions 结果单独记录，不把本地 Windows 通过当作 Linux 已通过。
+
+0.2.0 补充验证：
+- 两个适配版本均有 7 项服务测试，新增面板列表、手动保存、更新、过期/范围检查与 revision 冲突检查。
+- 在独立 DSH 0.2.1-rc.2 Web profile 中确认“记忆”标签显示在“轨迹”旁。
+- 真实浏览器完成面板新增项目记忆，界面返回“已保存”；刷新页面后同一条目仍显示。
+- 演示数据仅存在于独立测试 DSH_HOME，没有写入用户的实际记忆库。
+- 面板 API 通过 Connection 的 owner-only、已认证 Fetch 注册；未新增公开无认证路由。
+- 旧 version-1 记录继续可读；write origin 和项目路径是可选字段。

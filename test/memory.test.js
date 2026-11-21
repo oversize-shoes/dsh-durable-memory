@@ -12,6 +12,7 @@ import Tools from '@deepseek-ai/dsh-tools'
 import { createScope, scopeTarget } from '@deepseek-ai/dsh-scope'
 import { Memory, spec, scopeOf } from '../memory.js'
 import { apply } from '../index.js'
+import { panelHandler } from '../panel-api.js'
 
 const config = { enabled: true, maxEntries: 30, maxContentChars: 2000, recallChars: 6000, recallLimit: 8 }
 const source = { session: 'test-session', seq: 1 }
@@ -86,6 +87,28 @@ test('损坏存储拒绝加载，不静默清空', async t => {
   await assert.rejects(facility.open(spec))
   assert.equal(await readFile(path, 'utf8'), '{broken')
   await writeFile(path, original)
+})
+
+test('面板可完整列出所有范围、手动保存和修改；旧版本删除及无目录项目写入被拒绝', async t => {
+  const { root, facility } = await setup(t)
+  const memory = new Memory((await facility.open(spec)).table('memories'), config)
+  const session = { id: 'panel-test', seq: 3, header: { cwd: root } }
+  const handle = panelHandler(memory, id => id === 'panel-test' ? session : undefined)
+  const post = args => handle(new Request('http://localhost/api/durable-memory', { method: 'POST', body: JSON.stringify(args) }))
+  const created = await post({action:'save',scope:'project',sessionId:'panel-test',content:'面板保存的项目约定'})
+  assert.equal(created.status, 200)
+  const { memory: entry } = await created.json()
+  assert.equal(entry.source.kind, 'panel')
+  await memory.save({scope:'project:another',content:'其他目录的记忆',source})
+  const listed = await (await handle(new Request('http://localhost/api/durable-memory?sessionId=panel-test'))).json()
+  assert.equal(listed.records.length, 2)
+  assert.equal(listed.currentScope, entry.scope)
+  assert.equal((await post({action:'update',id:entry.id,revision:1,content:'修改后的约定'})).status, 200)
+  assert.equal((await post({action:'delete',id:entry.id,revision:1})).status, 409)
+  assert.equal((await post({action:'save',scope:'project',content:'无目录禁止保存'})).status, 400)
+  assert.equal((await post({action:'delete',id:entry.id,revision:2})).status, 200)
+  assert.equal(memory.visible(entry.scope).length, 0)
+  assert.equal((await post({action:'save',scope:'global',content:'password=secret12345'})).status, 400)
 })
 
 test('真实 Cordis、工具与上下文服务挂载、跨范围召回和停用清理', async t => {

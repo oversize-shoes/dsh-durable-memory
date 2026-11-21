@@ -1,6 +1,6 @@
 {
   "name": "dsh-durable-memory",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "Scoped local long-term memory for DeepSeek Harness",
   "type": "module",
   "main": "index.js",
@@ -15,7 +15,10 @@
     "README.zh-CN.md",
     "CONTRIBUTING.md",
     "docs/architecture-analysis.txt",
-    "VALIDATION.txt"
+    "VALIDATION.txt",
+    "client.js",
+    "panel-api.js",
+    "docs/memory-model.zh-CN.md"
   ],
   "engines": {
     "node": ">=24.9.0",
@@ -24,11 +27,20 @@
   "dsh": {
     "bundle": {
       "patch": "./cordis.patch.yml"
+    },
+    "client": {
+      "platform": "web",
+      "inject": [
+        "@deepseek-ai/dsh-client-ui-conversation"
+      ],
+      "external": [
+        "react"
+      ]
     }
   },
   "scripts": {
     "test": "node --test",
-    "check": "node --check index.js && node --check memory.js",
+    "check": "node --check index.js && node --check memory.js && node --check panel-api.js && node --check client.js",
     "test:compat": "node scripts/test-compat.mjs"
   },
   "dependencies": {
@@ -66,5 +78,10 @@
     "deepseek-harness",
     "memory",
     "long-term-memory"
-  ]
+  ],
+  "exports": {
+    ".": "./index.js",
+    "./client": "./client.js",
+    "./package.json": "./package.json"
+  }
 }

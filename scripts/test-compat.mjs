@@ -17,7 +17,7 @@ for (const name of Object.keys(pkg.devDependencies)) {
 let status = 1
 try {
   await writeFile(join(dir, 'package.json'), JSON.stringify({ private: true, type: 'module', dependencies: deps }))
-  for (const file of ['index.js', 'memory.js', 'test']) await cp(join(root, file), join(dir, file), { recursive: true })
+  for (const file of ['index.js', 'memory.js', 'panel-api.js', 'test']) await cp(join(root, file), join(dir, file), { recursive: true })
   // No user input is interpolated into this fixed Windows command.
   const installed = process.platform === 'win32'
     ? spawnSync(process.env.ComSpec ?? 'cmd.exe', ['/d', '/s', '/c', 'npm install --ignore-scripts --no-audit --no-fund'], { cwd: dir, stdio: 'inherit' })

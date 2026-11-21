@@ -4,7 +4,7 @@
 
 给 DeepSeek Harness 增加跨会话的本地长期记忆，让它记住项目约定、稳定偏好和排障经验，在新会话中按需召回。
 
-独立社区插件，MIT 开源。当前为 **0.1.1 预览版**，欢迎试用和反馈。
+独立社区插件，MIT 开源。当前为 **0.2.0 预览版**，欢迎试用和反馈。
 
 ## 功能
 
@@ -26,32 +26,50 @@
 
 先运行 `node --version`、`dsh --version`、`pnpm --version` 检查环境。其他 rc 尚未验证，不建议绕过版本检查。完整 Desktop 安装测试仍待补充。
 
-## 方法一：界面安装
+## 推荐：直接从 GitHub 仓库安装
 
-1. 打开 [v0.1.1 发布页](https://github.com/oversize-shoes/dsh-durable-memory/releases/tag/v0.1.1)。
-2. 下载 **dsh-durable-memory-0.1.1.tgz**，不要选 GitHub 自动生成的 Source code 压缩包。
+```sh
+dsh plugin --profile web add "github:oversize-shoes/dsh-durable-memory#v0.2.0"
+```
+
+DSH「添加插件」中也可填入 `github:oversize-shoes/dsh-durable-memory#v0.2.0`。把 `web` 换成实际 profile。仓库已包含 Host 和浏览器可执行 JS，没有编译/安装脚本，所以**安装包不是必须的**。推荐固定标签，避免主分支更新影响行为。
+
+## 备选：界面安装发布包
+
+1. 打开 [v0.2.0 发布页](https://github.com/oversize-shoes/dsh-durable-memory/releases/tag/v0.2.0)。
+2. 下载 **dsh-durable-memory-0.2.0.tgz**，不要选 GitHub 自动生成的 Source code 压缩包。
 3. 在 DSH「插件 → 添加插件」选择文件，或粘贴安装包的本地完整路径。
 4. 按提示启用或重启。新会话中应能看到 **durable_memory** 工具。
 
 若工具没出现，先重启整个 DSH 后端，再刷新网页。仅刷新网页不一定加载新插件。
 
-## 方法二：命令安装
+## 备选：通过发布包链接安装
 
 Web 版：
 
 ```sh
-dsh plugin --profile web add "https://github.com/oversize-shoes/dsh-durable-memory/releases/download/v0.1.1/dsh-durable-memory-0.1.1.tgz"
+dsh plugin --profile web add "https://github.com/oversize-shoes/dsh-durable-memory/releases/download/v0.2.0/dsh-durable-memory-0.2.0.tgz"
 ```
 
 网络受限时，从发布页手动下载后安装：
 
 ```powershell
-dsh plugin --profile web add "C:/Downloads/dsh-durable-memory-0.1.1.tgz"
+dsh plugin --profile web add "C:/Downloads/dsh-durable-memory-0.2.0.tgz"
 ```
 
 把 `web` 换成你正在运行的实际 profile。Desktop 不一定使用 `desktop` 名称，请看启动配置。安装后用原先的方式重启，例如 `dsh web`。
 
 安装包已包含可执行 JS，不需要编译、没有安装脚本。npm 包名尚未发布，**不要运行 `npm install dsh-durable-memory` 安装插件**。
+
+## 可视化面板与写入时机
+
+打开已有会话，点击“对话 / 轨迹”旁的 **记忆** 标签。可以查看所有条目，按当前项目/全局、有效/过期筛选，搜索内容和标签，并直接新增、编辑、删除。来源详情显示保存操作的会话、时间和版本。空白新会话首页可能还没有会话标签，进入已有会话后查看。
+
+**是跨会话、跨重启的记忆。** 项目记忆在相同真实工作目录下生效，全局记忆可跨目录使用。
+
+当前只在两种情况下写入：你在面板点击保存；或模型调用保存/修改工具。插件提示模型保存稳定事实，因此模型也可能自行选择调用；并非只有说了“记住”才可能保存。但每轮结束没有后台固定提炼，打开会话和自动召回也不会新增记忆。是否已保存，以面板条目或工具成功结果为准。
+
+详细说明见 [记忆工作原理](docs/memory-model.zh-CN.md)。
 
 ## 三分钟自测
 
@@ -124,6 +142,6 @@ dsh plugin --profile web remove dsh-durable-memory
 
 已针对两个声明版本运行真实 DSH 服务测试，覆盖存储重开、范围隔离、过期、去重、并发修改、损坏数据、工具调度、停用及重新加载。Windows 上还通过官方 CLI 在独立环境安装 tgz，启动完整 DSH 0.2.1-rc.2 Web profile，并由探针确认工具及存储已加载。代理单元测试使用精简替身，完整真实模型和 Desktop 端到端验证仍待补充。提供了 [Windows/Linux CI 配置示例](docs/ci-example.yml)，由于发布工作流需要额外 GitHub 授权，目前尚未启用；本地 Windows 通过不表示 Linux 已通过。
 
-当前不提供后台提炼、语义向量检索、管理面板、修订历史、云同步或多进程共同写入支持。
+当前不提供后台提炼、语义向量检索、修订历史、云同步或多进程共同写入支持。
 
 参见 [贡献指南](CONTRIBUTING.md)、[更新记录](CHANGELOG.md)、[源码机制分析](docs/architecture-analysis.txt) 和 [MIT 许可证](LICENSE)。欢迎提交问题和 PR，日志分享前请移除凭据和私人路径。

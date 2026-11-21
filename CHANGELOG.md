@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.2.0 — 2026-11-21
+
+- Add a Memory conversation tab beside Chat/Trajectory: overview, all/current/global filters, search, expiry, source details, pagination, manual save, edit and confirmed delete.
+- Register panel requests through DSH's authenticated owner-only Connection routes.
+- Record optional write origin and project path; retain compatibility with existing version-1 records.
+- Document GitHub repository installation as well as release tarballs; no build step is required.
+- Explain cross-session scope and the two write triggers: panel saves and model tool calls.
+- Add panel CRUD/revision regression tests and verify the real Web UI save/reload flow.
+
 ## 0.1.1 — 2026-11-21
 
 - Support DSH 0.2.1-rc.2 alongside 0.2.2-rc.5 after service-level compatibility tests.

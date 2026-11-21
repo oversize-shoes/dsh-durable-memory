@@ -1,6 +1,7 @@
 import z from '@deepseek-ai/schemastery'
 import { defineTool } from '@deepseek-ai/dsh-tools'
 import { Memory, scopeOf, spec } from './memory.js'
+import { panelHandler } from './panel-api.js'
 
 export const name = 'durable-memory'
 export const inject = ['tools', 'agents', 'storageDomain', 'systemPrompt']
@@ -19,6 +20,12 @@ export async function apply(ctx, config) {
   ctx.effect(() => () => domain.close())
   ctx.fiber.assertActive()
   const memory = new Memory(domain.table('memories'), config)
+  ctx.inject(['connection', 'sessions'], child => {
+    child.effect(() => child.connection.fetch.register({
+      path: '/api/durable-memory', methods: ['GET', 'POST'], requestBody: 'buffered',
+      fetch: panelHandler(memory, id => child.sessions.get(id)),
+    }))
+  })
   const installed = new WeakSet()
   function attach(agent) {
     if (installed.has(agent)) return
@@ -55,11 +62,11 @@ export async function apply(ctx, config) {
     async execute(args, exec) {
       exec.signal.throwIfAborted()
       const scope = args.scope === 'global' ? 'global' : scopeOf(exec.agent.session.header.cwd)
-      const source = { session: String(exec.agent.session.id), seq: Number(exec.agent.session.seq) }
+      const source = { session: String(exec.agent.session.id), seq: Number(exec.agent.session.seq), kind: 'tool' }
       let result
       if (args.action === 'search') result = memory.search(scope, args.query ?? '')
       else if (args.action === 'list') result = [...memory.table.entries()].map(([, m]) => m).filter(m => m.scope === scope).slice(0, config.maxEntries)
-      else if (args.action === 'save') result = await memory.save({ scope, content: args.content ?? '', tags: args.tags, pinned: args.pinned, ttlDays: args.ttlDays, source })
+      else if (args.action === 'save') result = await memory.save({ scope, content: args.content ?? '', tags: args.tags, pinned: args.pinned, ttlDays: args.ttlDays, source, projectPath: exec.agent.session.header.cwd })
       else if (args.action === 'update') result = await memory.change(scope, args.id, args.revision, args.content ?? '', source)
       else if (args.action === 'delete') result = await memory.remove(scope, args.id, args.revision)
       else throw new Error('未知操作。')

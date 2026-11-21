@@ -8,7 +8,8 @@ export const recordSchema = z.object({
   id: z.string(), scope: z.string(), content: z.string(), tags: z.array(z.string()),
   pinned: z.boolean(), createdAt: z.number(), updatedAt: z.number(),
   expiresAt: z.number().nullable(), revision: z.number().int().positive(),
-  source: z.object({ session: z.string(), seq: z.number() }),
+  projectPath: z.string().optional(),
+  source: z.object({ session: z.string(), seq: z.number(), kind: z.enum(['tool', 'panel']).optional() }),
 })
 
 export const spec = defineDomain({
@@ -64,7 +65,7 @@ export class Memory {
       .sort((a, b) => Number(b.m.pinned) - Number(a.m.pinned) || b.score - a.score || b.m.updatedAt - a.m.updatedAt || a.m.id.localeCompare(b.m.id))
       .slice(0, limit).map(x => x.m)
   }
-  save({ scope, content, tags = [], pinned = false, ttlDays = 0, source }) {
+  save({ scope, content, tags = [], pinned = false, ttlDays = 0, source, projectPath }) {
     return this.write(async () => {
       checkContent(content, this.config.maxContentChars)
       if (!Number.isFinite(ttlDays) || ttlDays < 0 || ttlDays > 36500) throw new Error('ttlDays 须为 0–36500。')
@@ -75,7 +76,7 @@ export class Memory {
       const now = Date.now()
       const memory = { id: randomUUID(), scope, content: content.trim(), tags, pinned,
         createdAt: now, updatedAt: now, expiresAt: ttlDays ? now + ttlDays * 86400000 : null,
-        revision: 1, source }
+        revision: 1, source, ...(projectPath && scope !== 'global' ? { projectPath } : {}) }
       await this.table.put(memory.id, memory)
       return { action: 'created', memory }
     })
